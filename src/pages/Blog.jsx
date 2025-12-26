@@ -86,7 +86,7 @@ const Blog = () => {
   }
 
   return (
-    <main className="container page fade-in-up">
+    <main className="container page fade-in-up reveal">
       <h1 className="page-title">部落格文章</h1>
       <p className="page-subtitle">
         這裡會顯示後台標記為「部落格」的文章，支援類別與標籤篩選。
@@ -131,7 +131,7 @@ const Blog = () => {
       ) : (
         <section className="post-grid">
           {filteredPosts.map((post) => (
-            <article key={post.id} className="card post-card">
+            <article key={post.id} className="card post-card reveal">
               <div className="post-card__meta">
                 <span>{post.createdAt}</span>
                 <span>· {post.category || "未分類"}</span>

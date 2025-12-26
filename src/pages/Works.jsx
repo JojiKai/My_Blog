@@ -44,7 +44,7 @@ const Works = () => {
   }
 
   return (
-    <main className="container page fade-in-up">
+    <main className="container page fade-in-up reveal">
       <h1 className="page-title">作品集</h1>
       <p className="page-subtitle">
         顯示後台標為「作品 / 專案」的文章，可附摘要、標籤與日期。
@@ -55,7 +55,7 @@ const Works = () => {
       ) : (
         <section className="post-grid">
           {workPosts.map((p) => (
-            <article key={p.id} className="card post-card">
+            <article key={p.id} className="card post-card reveal">
               <div className="post-card__meta">
                 <span>{p.createdAt}</span>
                 <span>· {p.category || "未分類"}</span>

@@ -44,7 +44,7 @@ const TradingLog = () => {
   }
 
   return (
-    <main className="container page fade-in-up">
+    <main className="container page fade-in-up reveal">
       <h1 className="page-title">交易筆記</h1>
       <p className="page-subtitle">
         顯示後台標為「交易筆記」的文章，用來檢討策略、紀錄情緒與績效。
@@ -55,7 +55,7 @@ const TradingLog = () => {
       ) : (
         <section className="post-grid">
           {tradingPosts.map((p) => (
-            <article key={p.id} className="card post-card">
+            <article key={p.id} className="card post-card reveal">
               <div className="post-card__meta">
                 <span>{p.createdAt}</span>
                 <span>· {p.category || "交易筆記"}</span>

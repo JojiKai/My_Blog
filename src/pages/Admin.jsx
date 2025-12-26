@@ -1,4 +1,4 @@
-// src/pages/Admin.jsx
+﻿// src/pages/Admin.jsx
 import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:3000/api";
@@ -43,6 +43,10 @@ const Admin = () => {
     setContent("");
     setSection("blog");
     setEditingId(null);
+  };
+
+  const appendImageTemplate = () => {
+    setContent((prev) => `${prev}\n![圖片描述](/your-image.jpg)\n`);
   };
 
   const handleSubmit = async (e) => {
@@ -196,16 +200,14 @@ const Admin = () => {
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder="簡短描述這篇文章的內容或收穫…"
+            style={{ minHeight: 90 }}
           />
         </label>
 
         <div className="field-grid">
           <label className="field">
             <span className="field__label">文章歸類</span>
-            <select
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-            >
+            <select value={section} onChange={(e) => setSection(e.target.value)}>
               <option value="blog">部落格</option>
               <option value="work">作品 / 專案</option>
               <option value="trading">交易筆記</option>
@@ -255,7 +257,16 @@ console.log("hello");
 \`\`\`
 `}
             required
+            style={{ minHeight: 320 }}
           />
+          <div className="admin-actions" style={{ marginTop: 6 }}>
+            <button type="button" className="btn-ghost small" onClick={appendImageTemplate}>
+              插入圖片模板（public 路徑）
+            </button>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>
+              例：/profile.jpg 或 /images/xxx.png
+            </span>
+          </div>
         </label>
 
         <div className="admin-actions">

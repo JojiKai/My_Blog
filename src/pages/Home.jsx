@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <main className="container page fade-in-up">
+    <main className="container page fade-in-up reveal">
       <section className="hero">
         <div className="hero-bg-glow" aria-hidden />
         <div className="hero-grid">
-          <div className="hero-main">
+          <div className="hero-main reveal">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
-              <span>個人網誌 · 程式開發 × 交易筆記</span>
+              <span>KAI · 程式開發 × 交易筆記</span>
             </div>
             <h1 className="hero-title">
               把開發經驗與交易心得
@@ -33,7 +33,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="hero-side">
+          <div className="hero-side reveal">
             <div className="card hero-side-card">
               <div className="hero-photo-card">
                 <img src="/profile.jpg" alt="個人照片" />

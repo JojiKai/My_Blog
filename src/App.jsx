@@ -1,6 +1,12 @@
-// src/App.jsx
+﻿// src/App.jsx
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  NavLink,
+  useLocation,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Blog from "./pages/Blog";
 import Admin from "./pages/Admin";
@@ -10,20 +16,25 @@ import TradingLog from "./pages/TradingLog";
 
 const isDev = import.meta.env.DEV;
 
-const App = () => {
+const AppShell = () => {
   const [theme, setTheme] = useState("dark");
+  const location = useLocation();
 
+  // 初始化主題與 JS 標記
   useEffect(() => {
+    document.documentElement.classList.add("js-enabled");
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") {
       setTheme(saved);
       return;
     }
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)")
-      .matches;
+    const prefersLight = window.matchMedia(
+      "(prefers-color-scheme: light)"
+    ).matches;
     setTheme(prefersLight ? "light" : "dark");
   }, []);
 
+  // 套用主題 class 與儲存
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "light") {
@@ -34,6 +45,24 @@ const App = () => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  // reveal 動畫啟用
+  useEffect(() => {
+    const elements = document.querySelectorAll(".reveal");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal--in");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.05, rootMargin: "0px 0px -8% 0px" }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
@@ -42,12 +71,12 @@ const App = () => {
     "header-link" + (isActive ? " header-link--active" : "");
 
   return (
-    <BrowserRouter>
+    <>
       <header>
         <nav className="container header-nav">
           <NavLink to="/" className="header-nav__brand">
             <span className="header-nav__brand-mark" />
-            <span>個人網誌 · 程式開發 × 交易筆記</span>
+            <span>孟愷KAI - 程式開發 × 交易筆記</span>
           </NavLink>
           <div className="header-nav__links">
             <NavLink to="/" end className={navClass}>
@@ -67,7 +96,11 @@ const App = () => {
                 後台
               </NavLink>
             )}
-            <button type="button" className="theme-toggle" onClick={toggleTheme}>
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={toggleTheme}
+            >
               {theme === "light" ? "夜間模式" : "日間模式"}
               <span className="theme-toggle__dot" aria-hidden />
             </button>
@@ -83,8 +116,14 @@ const App = () => {
         <Route path="/trading" element={<TradingLog />} />
         {isDev && <Route path="/admin" element={<Admin />} />}
       </Routes>
-    </BrowserRouter>
+    </>
   );
 };
+
+const App = () => (
+  <BrowserRouter>
+    <AppShell />
+  </BrowserRouter>
+);
 
 export default App;
