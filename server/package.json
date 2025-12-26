@@ -1,0 +1,17 @@
+{
+  "name": "my-blog-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
