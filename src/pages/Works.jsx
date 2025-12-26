@@ -1,5 +1,6 @@
-// src/pages/Works.jsx
+﻿// src/pages/Works.jsx
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const Works = () => {
   const [posts, setPosts] = useState([]);
@@ -17,7 +18,7 @@ const Works = () => {
         setPosts(data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "發生錯誤");
+        setError(err.message || "載入失敗");
       } finally {
         setLoading(false);
       }
@@ -30,7 +31,7 @@ const Works = () => {
   if (loading) {
     return (
       <main className="container page">
-        <p>載入中...</p>
+        <p>載入中…</p>
       </main>
     );
   }
@@ -44,62 +45,40 @@ const Works = () => {
 
   return (
     <main className="container page fade-in-up">
-      <h1 className="page-title">作品</h1>
+      <h1 className="page-title">作品集</h1>
       <p className="page-subtitle">
-        這裡顯示在後台被標記為「作品 / 專案」的文章。
+        顯示後台標為「作品 / 專案」的文章，可附摘要、標籤與日期。
       </p>
 
       {workPosts.length === 0 ? (
-        <p>
-          目前還沒有任何作品文章，可以到後台新增，並將文章類型設為「作品 /
-          專案」。
-        </p>
+        <p>目前沒有作品文章，請在後台新增並設定分類為「作品 / 專案」。</p>
       ) : (
-        workPosts.map((p) => (
-          <article
-            key={p.id}
-            className="card card--clickable"
-            style={{ marginBottom: 16 }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                color: "#9ca3af",
-                marginBottom: 4,
-              }}
-            >
-              {p.createdAt} ・ {p.category || "未分類"}
-            </div>
-            <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>{p.title}</h2>
-            <p style={{ margin: "0 0 8px", fontSize: 14 }}>
-              {p.summary || "（尚未填寫摘要）"}
-            </p>
-            {Array.isArray(p.tags) && p.tags.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  fontSize: 12,
-                }}
-              >
-                {p.tags.map((t) => (
-                  <span
-                    key={t}
-                    style={{
-                      padding: "3px 8px",
-                      borderRadius: 999,
-                      border: "1px solid rgba(148,163,184,0.6)",
-                      backgroundColor: "rgba(248,250,252,0.9)",
-                    }}
-                  >
-                    {t}
-                  </span>
-                ))}
+        <section className="post-grid">
+          {workPosts.map((p) => (
+            <article key={p.id} className="card post-card">
+              <div className="post-card__meta">
+                <span>{p.createdAt}</span>
+                <span>· {p.category || "未分類"}</span>
               </div>
-            )}
-          </article>
-        ))
+              <h2 className="post-card__title">{p.title}</h2>
+              <p className="post-card__excerpt">
+                {p.summary || "（建議填寫摘要以利閱讀）"}
+              </p>
+              {Array.isArray(p.tags) && p.tags.length > 0 && (
+                <div className="post-card__tags">
+                  {p.tags.map((t) => (
+                    <span key={t} className="pill">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Link to={`/blog/${p.id}`} className="btn-outline">
+                閱讀全文
+              </Link>
+            </article>
+          ))}
+        </section>
       )}
     </main>
   );

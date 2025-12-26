@@ -25,7 +25,7 @@ const Blog = () => {
         setPosts(data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "發生錯誤");
+        setError(err.message || "載入失敗");
       } finally {
         setLoading(false);
       }
@@ -34,35 +34,30 @@ const Blog = () => {
     fetchPosts();
   }, []);
 
-  // 只取「一般文章」區塊的文章（section === 'blog'）
+  // 只取 section === "blog" 的文章
   const blogPosts = posts.filter((p) => (p.section || "blog") === "blog");
 
-  // 文章頁的分類只看 blogPosts，不看其他 section
   const categories = [
     "全部",
     ...Array.from(new Set(blogPosts.map((p) => p.category || "未分類"))),
   ];
 
-  // 文章頁的標籤只看 blogPosts，不看其他 section
   const tagsFromPosts = blogPosts.flatMap((p) =>
     Array.isArray(p.tags) ? p.tags : []
   );
   const tags = ["全部", ...Array.from(new Set(tagsFromPosts))];
 
-  // 在「已經限定 blogPosts」的前提下再做分類 / 標籤過濾
   const filteredPosts = blogPosts.filter((post) => {
     const category = post.category || "未分類";
     const postTags = Array.isArray(post.tags) ? post.tags : [];
 
     const categoryMatch =
       activeCategory === "全部" ? true : category === activeCategory;
-
     const tagMatch = activeTag === "全部" ? true : postTags.includes(activeTag);
 
     return categoryMatch && tagMatch;
   });
 
-  // 卡片簡略內容：優先用 summary，沒有就用 content 前幾十個字
   const getPreviewText = (post) => {
     const text =
       (post.summary && post.summary.trim()) ||
@@ -70,7 +65,6 @@ const Blog = () => {
       "";
 
     const maxLength = 80;
-
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "…";
   };
@@ -78,7 +72,7 @@ const Blog = () => {
   if (loading) {
     return (
       <main className="container page">
-        <p>載入中...</p>
+        <p>載入中…</p>
       </main>
     );
   }
@@ -95,23 +89,18 @@ const Blog = () => {
     <main className="container page fade-in-up">
       <h1 className="page-title">部落格文章</h1>
       <p className="page-subtitle">
-        這裡只顯示在後台被標記為「一般文章」的內容；分類與標籤也僅統計這些文章。
+        這裡會顯示後台標記為「部落格」的文章，支援類別與標籤篩選。
       </p>
 
-      {/* 分類篩選列 */}
-      <section style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 14, marginBottom: 8, color: "#9ca3af" }}>
-          分類
-        </h2>
+      <section className="filter-section">
+        <h2 className="filter-label">分類</h2>
         <div className="chip-row">
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={
-                "chip" + (activeCategory === cat ? " chip--active" : "")
-              }
+              className={"chip" + (activeCategory === cat ? " chip--active" : "")}
             >
               {cat}
             </button>
@@ -119,12 +108,9 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* 標籤篩選列 */}
       {tags.length > 1 && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 14, marginBottom: 8, color: "#9ca3af" }}>
-            標籤
-          </h2>
+        <section className="filter-section">
+          <h2 className="filter-label">標籤</h2>
           <div className="chip-row">
             {tags.map((tag) => (
               <button
@@ -140,34 +126,37 @@ const Blog = () => {
         </section>
       )}
 
-      {/* 文章卡片（簡略） */}
       {filteredPosts.length === 0 ? (
-        <p>目前符合條件的文章為空。</p>
+        <p>沒有符合條件的文章。</p>
       ) : (
-        filteredPosts.map((post) => (
-          <article
-            key={post.id}
-            className="card card--clickable"
-            style={{ marginBottom: 16 }}
-          >
-            <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>
-              <Link to={`/blog/${post.id}`}>{post.title}</Link>
-            </h2>
-            <p style={{ margin: "0 0 8px", fontSize: 12, color: "#9ca3af" }}>
-              {post.createdAt} ・ {post.category || "未分類"}
-              {Array.isArray(post.tags) && post.tags.length > 0
-                ? " ・ " + post.tags.join(" / ")
-                : ""}
-            </p>
-            <p style={{ margin: "0 0 12px", fontSize: 14 }}>
-              {getPreviewText(post)}
-            </p>
+        <section className="post-grid">
+          {filteredPosts.map((post) => (
+            <article key={post.id} className="card post-card">
+              <div className="post-card__meta">
+                <span>{post.createdAt}</span>
+                <span>· {post.category || "未分類"}</span>
+              </div>
+              <h2 className="post-card__title">
+                <Link to={`/blog/${post.id}`}>{post.title}</Link>
+              </h2>
+              <p className="post-card__excerpt">{getPreviewText(post)}</p>
 
-            <Link to={`/blog/${post.id}`} className="btn-outline">
-              完整閱讀 →
-            </Link>
-          </article>
-        ))
+              {Array.isArray(post.tags) && post.tags.length > 0 && (
+                <div className="post-card__tags">
+                  {post.tags.map((tag) => (
+                    <span key={tag} className="pill">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <Link to={`/blog/${post.id}`} className="btn-outline">
+                閱讀全文
+              </Link>
+            </article>
+          ))}
+        </section>
       )}
     </main>
   );

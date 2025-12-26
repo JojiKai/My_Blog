@@ -1,5 +1,6 @@
-// src/pages/TradingLog.jsx
+﻿// src/pages/TradingLog.jsx
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const TradingLog = () => {
   const [posts, setPosts] = useState([]);
@@ -17,7 +18,7 @@ const TradingLog = () => {
         setPosts(data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "發生錯誤");
+        setError(err.message || "載入失敗");
       } finally {
         setLoading(false);
       }
@@ -30,7 +31,7 @@ const TradingLog = () => {
   if (loading) {
     return (
       <main className="container page">
-        <p>載入中...</p>
+        <p>載入中…</p>
       </main>
     );
   }
@@ -44,37 +45,31 @@ const TradingLog = () => {
 
   return (
     <main className="container page fade-in-up">
-      <h1 className="page-title">交易紀錄</h1>
+      <h1 className="page-title">交易筆記</h1>
       <p className="page-subtitle">
-        這裡顯示在後台被標記為「交易紀錄」的文章，可以用來紀錄策略、實際操作與檢討。
+        顯示後台標為「交易筆記」的文章，用來檢討策略、紀錄情緒與績效。
       </p>
 
       {tradingPosts.length === 0 ? (
-        <p>
-          目前還沒有任何交易紀錄文章，可以到後台新增，並將文章類型設為「交易紀錄」。
-        </p>
+        <p>目前沒有交易筆記，請在後台新增並設定分類為「交易筆記」。</p>
       ) : (
-        tradingPosts.map((p) => (
-          <article key={p.id} className="card" style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 4,
-                fontSize: 13,
-                color: "#9ca3af",
-              }}
-            >
-              <span>{p.createdAt}</span>
-              <span>{p.category || "交易紀錄"}</span>
-            </div>
-            <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>{p.title}</h2>
-            <p style={{ margin: "0 0 8px", fontSize: 14 }}>
-              {p.summary ||
-                "（建議在摘要欄位簡短寫今天的重點與策略概念，內文再展開）"}
-            </p>
-          </article>
-        ))
+        <section className="post-grid">
+          {tradingPosts.map((p) => (
+            <article key={p.id} className="card post-card">
+              <div className="post-card__meta">
+                <span>{p.createdAt}</span>
+                <span>· {p.category || "交易筆記"}</span>
+              </div>
+              <h2 className="post-card__title">{p.title}</h2>
+              <p className="post-card__excerpt">
+                {p.summary || "（建議在摘要區描述當日策略、情緒或關鍵調整。）"}
+              </p>
+              <Link to={`/blog/${p.id}`} className="btn-outline">
+                閱讀全文
+              </Link>
+            </article>
+          ))}
+        </section>
       )}
     </main>
   );

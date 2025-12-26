@@ -29,7 +29,7 @@ const PostDetail = () => {
         setPost(data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "發生錯誤");
+        setError(err.message || "載入失敗");
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ const PostDetail = () => {
   if (loading) {
     return (
       <main className="container page">
-        <p>載入中...</p>
+        <p>載入中…</p>
       </main>
     );
   }
@@ -51,7 +51,7 @@ const PostDetail = () => {
       <main className="container page">
         <p style={{ marginBottom: 16 }}>載入失敗：{error}</p>
         <Link to="/blog" className="link-back">
-          ← 回到文章列表
+          返回文章列表
         </Link>
       </main>
     );
@@ -62,7 +62,7 @@ const PostDetail = () => {
       <main className="container page">
         <p>找不到這篇文章。</p>
         <Link to="/blog" className="link-back">
-          ← 回到文章列表
+          返回文章列表
         </Link>
       </main>
     );
@@ -70,15 +70,18 @@ const PostDetail = () => {
 
   return (
     <main className="container page fade-in-up">
-      <p className="post-meta">
-        {post.createdAt} ・ {post.category || "未分類"}{" "}
-        {Array.isArray(post.tags) && post.tags.length > 0
-          ? "・ " + post.tags.join(" / ")
-          : ""}
-      </p>
+      <div className="post-detail-meta">
+        <span>{post.createdAt}</span>
+        <span>· {post.category || "未分類"}</span>
+        {Array.isArray(post.tags) && post.tags.length > 0 && (
+          <span className="post-detail-tags">
+            · {post.tags.join(" / ")}
+          </span>
+        )}
+      </div>
       <h1 className="page-title page-title--detail">{post.title}</h1>
 
-      <article className="post-body">
+      <article className="post-body markdown-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
           {post.content || ""}
         </ReactMarkdown>
@@ -86,7 +89,7 @@ const PostDetail = () => {
 
       <div style={{ marginTop: 24 }}>
         <Link to="/blog" className="link-back">
-          ← 回到文章列表
+          返回文章列表
         </Link>
       </div>
     </main>
