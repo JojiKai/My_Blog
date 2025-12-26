@@ -1,7 +1,37 @@
 // src/pages/Home.jsx
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const Home = () => {
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [recentError, setRecentError] = useState(null);
+  const [recentLoading, setRecentLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        setRecentLoading(true);
+        setRecentError(null);
+        const res = await fetch("http://localhost:3000/api/posts");
+        if (!res.ok) throw new Error("API 錯誤：" + res.status);
+        const data = await res.json();
+        const blogPosts = data.filter((p) => (p.section || "blog") === "blog");
+        const sorted = blogPosts.sort((a, b) => {
+          const da = Date.parse(a.createdAt || "") || 0;
+          const db = Date.parse(b.createdAt || "") || 0;
+          return db - da;
+        });
+        setRecentPosts(sorted.slice(0, 6));
+      } catch (err) {
+        console.error(err);
+        setRecentError(err.message || "無法載入最新文章");
+      } finally {
+        setRecentLoading(false);
+      }
+    };
+    fetchRecent();
+  }, []);
+
   return (
     <main className="container page fade-in-up reveal">
       <section className="hero">
@@ -69,6 +99,43 @@ const Home = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="recent-section reveal">
+        <div className="recent-header">
+          <h2 className="page-title">最新文章</h2>
+          <p className="page-subtitle">最近 6 篇部落格文章</p>
+        </div>
+
+        {recentLoading ? (
+          <p>載入中…</p>
+        ) : recentError ? (
+          <p>載入失敗：{recentError}</p>
+        ) : recentPosts.length === 0 ? (
+          <p>目前沒有文章。</p>
+        ) : (
+          <div className="post-grid">
+            {recentPosts.map((post) => (
+              <article key={post.id} className="card post-card reveal">
+                <div className="post-card__meta">
+                  <span>{post.createdAt}</span>
+                  <span>· {post.category || "未分類"}</span>
+                </div>
+                <h3 className="post-card__title">
+                  <Link to={`/blog/${post.id}`}>{post.title}</Link>
+                </h3>
+                <p className="post-card__excerpt">
+                  {post.summary ||
+                    (post.content || "").slice(0, 80).trim() +
+                      ((post.content || "").length > 80 ? "…" : "")}
+                </p>
+                <Link to={`/blog/${post.id}`} className="btn-outline">
+                  閱讀全文
+                </Link>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );
