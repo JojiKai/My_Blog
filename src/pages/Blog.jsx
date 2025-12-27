@@ -1,6 +1,9 @@
 // src/pages/Blog.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const Blog = () => {
   const [posts, setPosts] = useState([]);
@@ -139,7 +142,14 @@ const Blog = () => {
               <h2 className="post-card__title">
                 <Link to={`/blog/${post.id}`}>{post.title}</Link>
               </h2>
-              <p className="post-card__excerpt">{getPreviewText(post)}</p>
+              <div className="post-card__excerpt markdown-excerpt">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {post.summary || post.content || ""}
+                </ReactMarkdown>
+              </div>
 
               {Array.isArray(post.tags) && post.tags.length > 0 && (
                 <div className="post-card__tags">

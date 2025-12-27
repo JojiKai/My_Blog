@@ -1,6 +1,9 @@
 // src/pages/Home.jsx
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const Home = () => {
   const [recentPosts, setRecentPosts] = useState([]);
@@ -124,11 +127,14 @@ const Home = () => {
                 <h3 className="post-card__title">
                   <Link to={`/blog/${post.id}`}>{post.title}</Link>
                 </h3>
-                <p className="post-card__excerpt">
-                  {post.summary ||
-                    (post.content || "").slice(0, 80).trim() +
-                      ((post.content || "").length > 80 ? "…" : "")}
-                </p>
+                <div className="post-card__excerpt markdown-excerpt">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                  >
+                    {post.summary || post.content || ""}
+                  </ReactMarkdown>
+                </div>
                 <Link to={`/blog/${post.id}`} className="btn-outline">
                   閱讀全文
                 </Link>

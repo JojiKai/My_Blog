@@ -1,7 +1,8 @@
 ﻿// src/pages/Admin.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 const API_BASE = "http://localhost:3000/api";
+const PAGE_SIZE = 10;
 
 const Admin = () => {
   const [posts, setPosts] = useState([]);
@@ -16,6 +17,18 @@ const Admin = () => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // 篩選/搜尋/排序 state (分為 UI 輸入與已套用條件)
+  const [searchInput, setSearchInput] = useState("");
+  const [sortInput, setSortInput] = useState("desc");
+  const [startInput, setStartInput] = useState("");
+  const [endInput, setEndInput] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
 
   const fetchPosts = async () => {
     try {
@@ -35,6 +48,11 @@ const Admin = () => {
     fetchPosts();
   }, []);
 
+  // 已套用條件變動時回到第一頁
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, sortOrder, startDate, endDate, posts.length]);
+
   const resetForm = () => {
     setTitle("");
     setSummary("");
@@ -47,6 +65,10 @@ const Admin = () => {
 
   const appendImageTemplate = () => {
     setContent((prev) => `${prev}\n![圖片描述](/your-image.jpg)\n`);
+  };
+
+  const appendSummaryImageTemplate = () => {
+    setSummary((prev) => `${prev}\n![圖片描述](/your-image.jpg)`);
   };
 
   const handleSubmit = async (e) => {
@@ -156,6 +178,74 @@ const Admin = () => {
     }
   };
 
+  const parseDate = (value) => {
+    const t = Date.parse(value);
+    return Number.isNaN(t) ? 0 : t;
+  };
+
+  const filteredPosts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const startTs = startDate ? Date.parse(startDate) : null;
+    const endTs = endDate ? Date.parse(endDate) + 24 * 60 * 60 * 1000 : null;
+
+    return posts
+      .filter((p) => {
+        const hay = `${p.title || ""} ${p.summary || ""}`.toLowerCase();
+        const matchSearch = term ? hay.includes(term) : true;
+
+        const ts = parseDate(p.createdAt || "");
+        const matchStart = startTs ? ts >= startTs : true;
+        const matchEnd = endTs ? ts < endTs : true;
+
+        return matchSearch && matchStart && matchEnd;
+      })
+      .sort((a, b) => {
+        const ta = parseDate(a.createdAt || "");
+        const tb = parseDate(b.createdAt || "");
+        return sortOrder === "desc" ? tb - ta : ta - tb;
+      });
+  }, [posts, searchTerm, startDate, endDate, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filteredPosts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  const grouped = useMemo(() => {
+    const map = new Map();
+    paginated.forEach((post) => {
+      const ts = parseDate(post.createdAt || "");
+      const d = ts ? new Date(ts) : null;
+      const key = d
+        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+        : "未分類時間";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(post);
+    });
+    return map;
+  }, [paginated]);
+
+  const handleApplyFilters = () => {
+    setSearchTerm(searchInput);
+    setSortOrder(sortInput);
+    setStartDate(startInput);
+    setEndDate(endInput);
+  };
+
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setSortInput("desc");
+    setStartInput("");
+    setEndInput("");
+    setSearchTerm("");
+    setSortOrder("desc");
+    setStartDate("");
+    setEndDate("");
+    setPage(1);
+  };
+
   const isEditing = Boolean(editingId);
 
   return (
@@ -202,12 +292,27 @@ const Admin = () => {
             placeholder="簡短描述這篇文章的內容或收穫…"
             style={{ minHeight: 90 }}
           />
+          <div className="admin-actions" style={{ marginTop: 6 }}>
+            <button
+              type="button"
+              className="btn-ghost small"
+              onClick={appendSummaryImageTemplate}
+            >
+              插入圖片模板（摘要）
+            </button>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>
+              例：/profile.jpg 或 /images/xxx.png
+            </span>
+          </div>
         </label>
 
         <div className="field-grid">
           <label className="field">
             <span className="field__label">文章歸類</span>
-            <select value={section} onChange={(e) => setSection(e.target.value)}>
+            <select
+              value={section}
+              onChange={(e) => setSection(e.target.value)}
+            >
               <option value="blog">部落格</option>
               <option value="work">作品 / 專案</option>
               <option value="trading">交易筆記</option>
@@ -244,13 +349,9 @@ const Admin = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={`可撰寫 Markdown 或內嵌 HTML，例如：
-# 大標題
-## 小標題
+# 大標題  ## 小標題
 段落文字，支援 **粗體**、_斜體_、~~刪除線~~。
-
-插入圖片：
-![描述文字](https://example.com/image.jpg)
-
+插入圖片：![描述文字](https://example.com/image.jpg)
 輸入程式碼：
 \`\`\`js
 console.log("hello");
@@ -258,9 +359,14 @@ console.log("hello");
 `}
             required
             style={{ minHeight: 320 }}
+            className="content-textarea"
           />
           <div className="admin-actions" style={{ marginTop: 6 }}>
-            <button type="button" className="btn-ghost small" onClick={appendImageTemplate}>
+            <button
+              type="button"
+              className="btn-ghost small"
+              onClick={appendImageTemplate}
+            >
               插入圖片模板（public 路徑）
             </button>
             <span style={{ fontSize: 12, color: "#9ca3af" }}>
@@ -269,8 +375,12 @@ console.log("hello");
           </div>
         </label>
 
-        <div className="admin-actions">
-          <button type="submit" disabled={loading} className="btn-primary">
+        <div className="admin-actions admin-actions--center">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary btn-primary--submit"
+          >
             {loading ? "處理中…" : isEditing ? "儲存更新" : "新增文章"}
           </button>
           {isEditing && (
@@ -281,52 +391,145 @@ console.log("hello");
         </div>
       </form>
 
-      <section>
-        <h2 className="section-title">文章清單</h2>
+      <section className="card" style={{ marginTop: 16 }}>
+        <div className="admin-filters">
+          <div className="admin-filters__row">
+            <label className="filter-field">
+              <span>搜尋（標題/摘要）</span>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="輸入關鍵字"
+              />
+            </label>
+            <label className="filter-field">
+              <span>排序</span>
+              <select
+                value={sortInput}
+                onChange={(e) => setSortInput(e.target.value)}
+              >
+                <option value="desc">最新在前</option>
+                <option value="asc">最舊在前</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="admin-filters__row">
+            <label className="filter-field">
+              <span>起始日期</span>
+              <input
+                type="date"
+                value={startInput}
+                onChange={(e) => setStartInput(e.target.value)}
+              />
+            </label>
+            <label className="filter-field">
+              <span>結束日期</span>
+              <input
+                type="date"
+                value={endInput}
+                onChange={(e) => setEndInput(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="admin-actions" style={{ marginTop: 2 }}>
+            <button
+              type="button"
+              className="btn-primary btn-primary--apply"
+              onClick={handleApplyFilters}
+            >
+              套用篩選
+            </button>
+            <button
+              type="button"
+              className="btn-ghost btn-ghost--clear"
+              onClick={handleClearFilters}
+            >
+              清除條件
+            </button>
+          </div>
+        </div>
+
+        <h2 className="section-title" style={{ marginTop: 4 }}>
+          文章清單
+        </h2>
         <p className="section-subtitle">
-          總計 {posts.length} 篇。可點「編輯」載入表單，或直接刪除。
+          總計 {filteredPosts.length} 篇。頁面顯示 {paginated.length} 篇。
         </p>
 
-        {posts.length === 0 ? (
-          <p>尚無文章。</p>
+        {filteredPosts.length === 0 ? (
+          <p>沒有符合條件的文章。</p>
         ) : (
-          <div className="card admin-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>標題</th>
-                  <th>分類</th>
-                  <th>建立時間</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {posts.map((post) => (
-                  <tr key={post.id}>
-                    <td title={post.title}>{post.title}</td>
-                    <td>{post.category || "未分類"}</td>
-                    <td>{post.createdAt || "-"}</td>
-                    <td className="admin-table__actions">
-                      <button
-                        type="button"
-                        onClick={() => handleEditClick(post)}
-                        className="btn-ghost small"
-                      >
-                        編輯
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClick(post.id)}
-                        className="btn-danger small"
-                      >
-                        刪除
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {[...grouped.entries()].map(([ym, list]) => (
+              <div key={ym} style={{ marginBottom: 16 }}>
+                <div className="section-title" style={{ margin: "8px 0" }}>
+                  {ym}
+                </div>
+                <div className="card admin-table" style={{ marginTop: 8 }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>標題</th>
+                        <th>分類</th>
+                        <th>建立時間</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {list.map((post) => (
+                        <tr key={post.id}>
+                          <td title={post.title}>{post.title}</td>
+                          <td>{post.category || "未分類"}</td>
+                          <td>{post.createdAt || "-"}</td>
+                          <td className="admin-table__actions">
+                            <button
+                              type="button"
+                              onClick={() => handleEditClick(post)}
+                              className="btn-ghost small"
+                            >
+                              編輯
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(post.id)}
+                              className="btn-danger small"
+                            >
+                              刪除
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+
+            <div className="pagination">
+              <button
+                type="button"
+                className="btn-ghost small"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                上一頁
+              </button>
+              <span className="pagination__info">
+                第 {currentPage} / {totalPages} 頁
+              </span>
+              <button
+                type="button"
+                className="btn-ghost small"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                下一頁
+              </button>
+            </div>
+          </>
         )}
       </section>
     </main>

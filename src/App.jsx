@@ -113,7 +113,9 @@ const AppShell = () => {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<PostDetail />} />
         <Route path="/works" element={<Works />} />
+        <Route path="/works/:id" element={<PostDetail />} />
         <Route path="/trading" element={<TradingLog />} />
+        <Route path="/trading/:id" element={<PostDetail />} />
         {isDev && <Route path="/admin" element={<Admin />} />}
       </Routes>
     </>
